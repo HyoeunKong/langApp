@@ -27,3 +27,7 @@ Animated.spring() - 물리모델 제공
 Animated.timing() - 대부분의 경우 사용
 
 userNativeDriver: true 모은 animation이 native에서 실행 (각각의 프레임마다 bridge를 이용하지 않음)
+
+### interpolation
+
+input value 를 새로운 out value로 반환
