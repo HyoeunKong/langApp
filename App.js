@@ -1,11 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react'
-import {
-  Animated,
-  Easing,
-  TouchableOpacity,
-  Pressable,
-  Dimensions,
-} from 'react-native'
+import { Animated, PanResponder } from 'react-native'
 import styled from 'styled-components/native'
 
 const Container = styled.View`
@@ -19,48 +13,39 @@ const Box = styled.View`
   width: 200px;
 `
 const AnimatedBox = Animated.createAnimatedComponent(Box)
-const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window')
+
 export default function App() {
   const POSITION = useRef(
     new Animated.ValueXY({
-      x: -SCREEN_WIDTH / 2 + 100,
-      y: -SCREEN_HEIGHT / 2 + 100,
+      x: 0,
+      y: 0,
     }),
   ).current
 
-  const topLeft = Animated.timing(POSITION, {
-    toValue: {
-      x: -SCREEN_WIDTH / 2 + 100,
-      y: -SCREEN_HEIGHT / 2 + 100,
-    },
-    useNativeDriver: false,
-  })
-  const topRight = Animated.timing(POSITION, {
-    toValue: {
-      x: SCREEN_WIDTH / 2 - 100,
-      y: -SCREEN_HEIGHT / 2 + 100,
-    },
-    useNativeDriver: false,
-  })
-  const bottomLeft = Animated.timing(POSITION, {
-    toValue: {
-      x: -SCREEN_WIDTH / 2 + 100,
-      y: SCREEN_HEIGHT / 2 - 100,
-    },
-    useNativeDriver: false,
-  })
-  const bottomRight = Animated.timing(POSITION, {
-    toValue: {
-      x: SCREEN_WIDTH / 2 - 100,
-      y: SCREEN_HEIGHT / 2 - 100,
-    },
-    useNativeDriver: false,
-  })
-  const moveUp = () => {
-    Animated.loop(
-      Animated.sequence([bottomLeft, bottomRight, topRight, topLeft]),
-    ).start()
-  }
+  const panResponder = useRef(
+    PanResponder.create({
+      onStartShouldSetPanResponder: () => true, //view에서 touch를 감지할 지 결정할 수 있도록 함
+      onPanResponderGrant: () => {
+        console.log('started')
+        POSITION.setOffset({
+          x: POSITION.x._value,
+          y: POSITION.y._value,
+        })
+      }, // 터치 시작
+      onPanResponderMove: (_, { dx, dy }) => {
+        POSITION.setValue({
+          x: dx,
+          y: dy,
+        })
+        console.log('move')
+      },
+      onPanResponderRelease: () => {
+        console.log('finished')
+        POSITION.flattenOffset()
+      }, //터치 끝
+    }),
+  ).current
+  console.log(...POSITION.getTranslateTransform())
 
   const borderRadius = POSITION.y.interpolate({
     inputRange: [-300, 300],
@@ -78,15 +63,14 @@ export default function App() {
   })
   return (
     <Container>
-      <Pressable onPress={moveUp}>
-        <AnimatedBox
-          style={{
-            borderRadius,
-            backgroundColor: bgColor,
-            transform: [...POSITION.getTranslateTransform()],
-          }}
-        />
-      </Pressable>
+      <AnimatedBox
+        {...panResponder.panHandlers}
+        style={{
+          borderRadius,
+          backgroundColor: bgColor,
+          transform: POSITION.getTranslateTransform(),
+        }}
+      />
     </Container>
   )
 }
